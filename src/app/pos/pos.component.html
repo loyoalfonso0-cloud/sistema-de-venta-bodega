@@ -1,0 +1,248 @@
+<main class="pos-shell">
+  <!-- Header superior con logo, stepper y botón cancelar -->
+  <header class="pos-header">
+    <div class="pos-brand">Bodega San José - POS</div>
+    <nav class="pos-stepper">
+      @for (step of steps(); track step.id) {
+        <div class="step" [class.active]="currentStep() === step.id" [class.done]="currentStep() > step.id">
+          <span class="step-number">{{ step.id }}</span>
+          <span class="step-label">{{ step.label }}</span>
+        </div>
+      }
+    </nav>
+    <div class="header-actions">
+      <span class="user-badge">
+        <span class="user-name">{{ authService.userDisplayName() }}</span>
+        <span class="user-role">{{ authService.userRole() }}</span>
+      </span>
+      <button class="btn-outline" (click)="authService.logout()">Cerrar Sesión</button>
+      <button class="btn-cancel" (click)="reset()">Cancelar Venta</button>
+    </div>
+  </header>
+
+  <!-- Barra de contexto del cliente (visible desde paso 2 en adelante) -->
+  @if (currentStep() >= 2) {
+    <div class="pos-context">
+      <span>Cliente: {{ customer()?.fullName || documentInput() || 'Consumidor Final' }}</span>
+      <span>Doc: {{ documentInput() }}</span>
+      <span>Items: {{ itemCount() }}</span>
+    </div>
+  }
+
+  <!-- Contenido dinámico del paso actual -->
+  @switch (currentStep()) {
+
+    @case (1) {
+      <!-- PASO 1: Identificación -->
+      <section class="step-content step-1">
+        <h1>¡Bienvenido! Ingrese la Cédula / DNI del Cliente</h1>
+        <p class="subtitle">Para acumular puntos y emitir comprobante electrónico válido.</p>
+        <div class="identification-layout">
+          <div class="input-panel">
+            <label for="docInput">Número de Identificación</label>
+            <input id="docInput" type="text" [value]="documentInput()" readonly placeholder="0" class="doc-display" />
+            <div class="doc-actions">
+              <button (click)="clearInput()">Limpiar</button>
+            </div>
+            <div class="quick-actions">
+              <button (click)="next()" class="btn-primary">Continuar al Escaneo →</button>
+              <button (click)="omitDocument()" class="btn-ghost">Omitir (Venta Rápida)</button>
+            </div>
+          </div>
+          <div class="numpad">
+            @for (digit of ['1','2','3','4','5','6','7','8','9','C','0','⌫']; track digit) {
+              @if (digit === 'C') {
+                <button class="num-key danger" (click)="clearInput()">C</button>
+              } @else if (digit === '⌫') {
+                <button class="num-key" (click)="deleteLastDigit()">⌫</button>
+              } @else {
+                <button class="num-key" (click)="appendDigit(digit)">{{ digit }}</button>
+              }
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    @case (2) {
+      <!-- PASO 2: Escaneo de Productos (layout 60/40) -->
+      <section class="step-content step-2">
+        <div class="catalog-panel">
+          <label for="barcodeInput">Captura de Producto</label>
+          <input id="barcodeInput" type="text" [value]="barcodeInput()" (input)="onBarcodeInput($event)" (keydown.enter)="onBarcodeSubmit()" placeholder="Escanea o escribe el código de barras" class="barcode-input" />
+          <div class="product-grid">
+            @for (product of products(); track product.sku) {
+              <button class="product-tile" (click)="addProduct(product)">
+                <span class="product-name">{{ product.name }}</span>
+                <span class="product-price">S/ {{ product.unitPrice.toFixed(2) }}</span>
+                <span class="product-stock">Stock: {{ product.stock }}</span>
+              </button>
+            } @empty {
+              <p>No hay productos disponibles.</p>
+            }
+          </div>
+        </div>
+        <aside class="ticket-panel">
+          <h3>Ticket de Venta</h3>
+          @for (item of cart(); track item.product.sku) {
+            <div class="ticket-line">
+              <span>{{ item.product.name }}</span>
+              <div class="qty-controls">
+                <button (click)="updateQuantity(item.product.sku, item.quantity - 1)">−</button>
+                <span>{{ item.quantity }}</span>
+                <button (click)="updateQuantity(item.product.sku, item.quantity + 1)">+</button>
+              </div>
+              <span>S/ {{ (item.product.unitPrice * item.quantity).toFixed(2) }}</span>
+            </div>
+          } @empty {
+            <p class="empty-cart">El carrito está vacío.</p>
+          }
+          <div class="ticket-totals">
+            <div>Subtotal: S/ {{ subtotal().toFixed(2) }}</div>
+            <div>IGV (18%): S/ {{ tax().toFixed(2) }}</div>
+            <div class="total">TOTAL: S/ {{ total().toFixed(2) }}</div>
+          </div>
+          <button class="btn-cta" [disabled]="!canAdvance()" (click)="next()">Procesar Pago →</button>
+        </aside>
+      </section>
+    }
+
+    @case (3) {
+      <!-- PASO 3: Método de Pago -->
+      <section class="step-content step-3">
+        <h1>Total a Cobrar: S/ {{ total().toFixed(2) }}</h1>
+        <p>Seleccione la forma de pago:</p>
+        <div class="payment-options">
+          <button class="payment-card" (click)="paymentMethod.set('efectivo')" [class.selected]="paymentMethod() === 'efectivo'">
+            <span class="icon">💵</span>
+            <h3>Efectivo</h3>
+            <p>Calcula cambio automáticamente.</p>
+          </button>
+          <button class="payment-card" (click)="paymentMethod.set('tarjeta')" [class.selected]="paymentMethod() === 'tarjeta'">
+            <span class="icon">💳</span>
+            <h3>Tarjeta Débito/Crédito</h3>
+            <p>Visa, Mastercard, contactless.</p>
+          </button>
+        </div>
+        @if (paymentMethod() === 'efectivo') {
+          <div class="cash-panel">
+            <label>Efectivo recibido:</label>
+            <input type="number" [value]="cashReceived()" (input)="onCashInput($event)" />
+            @if (change() > 0) {
+              <p class="change">Vuelto: S/ {{ change().toFixed(2) }}</p>
+            }
+          </div>
+        }
+        @if (errorMessage()) {
+          <p class="error-msg">{{ errorMessage() }}</p>
+        }
+        <div class="step-actions">
+          <button (click)="back()">← Volver</button>
+          <button class="btn-primary" [disabled]="!canAdvance()" (click)="next()">Continuar →</button>
+        </div>
+      </section>
+    }
+
+    @case (4) {
+      <!-- PASO 4: Selección de Cuenta -->
+      <section class="step-content step-4">
+        <h1>Seleccione el Tipo de Cuenta</h1>
+        <p>Indique el origen de los fondos de la tarjeta.</p>
+        <div class="account-options">
+          <button class="account-card" (click)="accountType.set('ahorros')" [class.selected]="accountType() === 'ahorros'">
+            <h3>Cuenta de Ahorros</h3>
+            <p>Débito directo desde cuenta personal o de sueldo.</p>
+          </button>
+          <button class="account-card" (click)="accountType.set('corriente')" [class.selected]="accountType() === 'corriente'">
+            <h3>Cuenta Corriente</h3>
+            <p>Cuentas comerciales, líneas de sobregiro.</p>
+          </button>
+        </div>
+        <div class="step-actions">
+          <button (click)="back()">← Cambiar Método de Pago</button>
+          <button class="btn-primary" [disabled]="!canAdvance()" (click)="next()">Continuar →</button>
+        </div>
+      </section>
+    }
+
+    @case (5) {
+      <!-- PASO 5: Pasarela y PIN -->
+      <section class="step-content step-5">
+        <h1>Ingrese su PIN de Seguridad</h1>
+        <p>Tarjeta detectada. Ingrese los 4 dígitos de su clave.</p>
+        <div class="pin-layout">
+          <div class="pin-display">
+            @for (i of [0,1,2,3]; track i) {
+              <span class="pin-dot" [class.filled]="pin().length > i"></span>
+            }
+          </div>
+          <div class="numpad">
+            @for (digit of ['1','2','3','4','5','6','7','8','9','C','0','⌫']; track digit) {
+              @if (digit === 'C') {
+                <button class="num-key danger" (click)="clearInput()">C</button>
+              } @else if (digit === '⌫') {
+                <button class="num-key" (click)="deleteLastDigit()">⌫</button>
+              } @else {
+                <button class="num-key" (click)="appendDigit(digit)">{{ digit }}</button>
+              }
+            }
+          </div>
+        </div>
+        @if (errorMessage()) {
+          <p class="error-msg">{{ errorMessage() }}</p>
+        }
+        <div class="step-actions">
+          <button (click)="back()">← Cambiar Tarjeta</button>
+          <button class="btn-primary" [disabled]="!canAdvance()" (click)="next()">Pagar S/ {{ total().toFixed(2) }} →</button>
+        </div>
+      </section>
+    }
+
+    @case (6) {
+      <!-- PASO 6: Facturación y Ticket -->
+      <section class="step-content step-6">
+        @if (invoice(); as inv) {
+          <div class="success-banner">
+            <span class="check">✓</span>
+            <h1>¡Pago Realizado con Éxito!</h1>
+            <p>Comprobante: {{ inv.number }}</p>
+          </div>
+          <div class="invoice-layout">
+            <div class="invoice-details">
+              <div class="invoice-header">
+                <h3>{{ store.name }}</h3>
+                <p>RUC: {{ store.ruc }}</p>
+              </div>
+              <div class="invoice-client">
+                <p><strong>Cliente:</strong> {{ inv.customer.fullName }}</p>
+                <p><strong>Documento:</strong> {{ inv.customer.documentId }}</p>
+              </div>
+              @for (item of inv.items; track item.product.sku) {
+                <div class="invoice-line">
+                  <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                  <span>S/ {{ (item.product.unitPrice * item.quantity).toFixed(2) }}</span>
+                </div>
+              }
+              <div class="invoice-totals">
+                <div>Subtotal: S/ {{ inv.subtotal.toFixed(2) }}</div>
+                <div>IGV: S/ {{ inv.tax.toFixed(2) }}</div>
+                <div class="total-dark">TOTAL: S/ {{ inv.total.toFixed(2) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="invoice-actions">
+            <button class="btn-primary" (click)="printInvoice()">🖨️ Imprimir Boleta</button>
+            <button class="btn-secondary" (click)="sendWhatsApp()">📱 Enviar por WhatsApp</button>
+            <button class="btn-dark" (click)="reset()">Nueva Venta →</button>
+          </div>
+        }
+      </section>
+    }
+
+  }
+
+  <!-- Mensaje de error global -->
+  @if (errorMessage() && currentStep() !== 3 && currentStep() !== 5) {
+    <p class="error-msg global">{{ errorMessage() }}</p>
+  }
+</main>

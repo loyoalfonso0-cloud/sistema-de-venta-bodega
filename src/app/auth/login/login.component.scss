@@ -1,0 +1,116 @@
+:host {
+  display: block;
+  height: 100vh;
+  background-color: var(--color-bg);
+  font-family: var(--font-family);
+  color: var(--color-primary);
+}
+
+.login-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--margin);
+}
+
+.login-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.login-header {
+  text-align: center;
+  
+  h1 {
+    font-size: var(--font-display-md-size);
+    font-weight: var(--font-display-md-weight);
+    margin: 0 0 var(--space-xs) 0;
+    color: var(--color-primary);
+  }
+  
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-body-lg-size);
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+
+  label {
+    font-size: var(--font-label-md-size);
+    font-weight: var(--font-label-md-weight);
+  }
+
+  input {
+    min-height: var(--touch-default);
+    padding: 0 var(--space-md);
+    font-size: var(--font-body-lg-size);
+    font-family: inherit;
+    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-default);
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+    }
+  }
+
+  .error-text {
+    color: var(--color-danger);
+    font-size: var(--font-label-sm-size);
+  }
+}
+
+.error-msg {
+  color: var(--color-danger);
+  font-weight: var(--font-label-lg-weight);
+  text-align: center;
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  margin: 0;
+}
+
+.btn-primary {
+  min-height: var(--touch-cta);
+  background-color: var(--color-secondary);
+  color: var(--md-on-secondary);
+  border: none;
+  border-radius: var(--radius-default);
+  font-size: var(--font-title-md-size);
+  font-weight: var(--font-title-md-weight);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: var(--space-md);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-secondary-pressed);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

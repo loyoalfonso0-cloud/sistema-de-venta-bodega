@@ -1,0 +1,89 @@
+<div class="dashboard-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon">📦</div>
+    <div class="kpi-info">
+      <div class="kpi-value">{{ kpis().totalProducts }}</div>
+      <div class="kpi-label">Total Productos</div>
+    </div>
+  </div>
+
+  <div class="kpi-card alert">
+    <div class="kpi-icon">⚠️</div>
+    <div class="kpi-info">
+      <div class="kpi-value">{{ kpis().criticalStock }}</div>
+      <div class="kpi-label">Stock Crítico</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon">🧾</div>
+    <div class="kpi-info">
+      <div class="kpi-value">{{ kpis().salesToday }}</div>
+      <div class="kpi-label">Ventas del Día</div>
+    </div>
+  </div>
+
+  <div class="kpi-card success">
+    <div class="kpi-icon">💰</div>
+    <div class="kpi-info">
+      <div class="kpi-value">{{ kpis().revenueToday | currency:'PEN':'S/ ' }}</div>
+      <div class="kpi-label">Ingresos del Día</div>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-panels">
+  <section class="panel">
+    <h2>Últimas Ventas</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Comprobante</th>
+          <th>Cliente</th>
+          <th>Total</th>
+          <th>Método</th>
+          <th>Hora</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sale of todaySales(); track sale.id) {
+          <tr>
+            <td>{{ sale.id }}</td>
+            <td>{{ sale.customer }}</td>
+            <td class="numeric">{{ sale.total | currency:'PEN':'S/ ' }}</td>
+            <td class="capitalize">{{ sale.method }}</td>
+            <td>{{ sale.timestamp | date:'shortTime' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty-state">No hay ventas registradas hoy</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Movimientos Recientes</h2>
+    <div class="timeline">
+      @for (mov of movements().slice(0, 5); track mov.id) {
+        <div class="timeline-item">
+          <div class="timeline-icon" [class.entrada]="mov.type === 'entrada'" [class.salida]="mov.type === 'salida'">
+            {{ mov.type === 'entrada' ? '➕' : '➖' }}
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <strong>{{ mov.productName }}</strong>
+              <span class="qty">{{ mov.type === 'entrada' ? '+' : '-' }}{{ mov.quantity }}</span>
+            </div>
+            <div class="timeline-meta">
+              <span>{{ mov.reason }}</span> • <span>{{ mov.timestamp | date:'shortTime' }}</span>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">No hay movimientos recientes</div>
+      }
+    </div>
+  </section>
+</div>

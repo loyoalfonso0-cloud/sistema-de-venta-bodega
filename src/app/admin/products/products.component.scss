@@ -1,0 +1,33 @@
+@use '../inventory/inventory.component.scss';
+
+.form-row {
+  display: flex;
+  gap: var(--space-md);
+  
+  .form-group {
+    flex: 1;
+  }
+}
+
+.help-text {
+  font-size: var(--font-label-sm-size);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
+}
+
+.form-group-checkbox {
+  margin-top: var(--space-md);
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-body-md-size);
+    cursor: pointer;
+  }
+}
+
+.btn-action.edit {
+  background-color: var(--color-bg-panel);
+  color: var(--color-primary);
+  &:hover { background-color: var(--color-border); }
+}

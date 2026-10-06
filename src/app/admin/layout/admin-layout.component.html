@@ -1,0 +1,72 @@
+<div class="admin-shell">
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+    <div class="sidebar-header">
+      @if (!sidebarCollapsed()) {
+        <span class="brand">Bodega POS</span>
+      } @else {
+        <span class="brand-icon">📦</span>
+      }
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <a routerLink="/pos" class="pos-button">
+          @if (!sidebarCollapsed()) {
+            🖥️ Modo Caja (POS) →
+          } @else {
+            🖥️
+          }
+        </a>
+      </div>
+
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+        <span class="icon">📊</span>
+        @if (!sidebarCollapsed()) { <span class="label">Dashboard</span> }
+      </a>
+      <a routerLink="/admin/inventario" routerLinkActive="active" class="nav-item">
+        <span class="icon">📦</span>
+        @if (!sidebarCollapsed()) { <span class="label">Inventario</span> }
+      </a>
+      <a routerLink="/admin/productos" routerLinkActive="active" class="nav-item">
+        <span class="icon">🏷️</span>
+        @if (!sidebarCollapsed()) { <span class="label">Productos</span> }
+      </a>
+      <a routerLink="/admin/categorias" routerLinkActive="active" class="nav-item">
+        <span class="icon">📁</span>
+        @if (!sidebarCollapsed()) { <span class="label">Categorías</span> }
+      </a>
+      <a routerLink="/admin/usuarios" routerLinkActive="active" class="nav-item">
+        <span class="icon">👥</span>
+        @if (!sidebarCollapsed()) { <span class="label">Usuarios</span> }
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="divider"></div>
+      <button class="nav-item btn-logout" (click)="authService.logout()">
+        <span class="icon">🚪</span>
+        @if (!sidebarCollapsed()) { <span class="label">Cerrar Sesión</span> }
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="btn-toggle" (click)="toggleSidebar()">☰</button>
+        <h1 class="page-title">{{ currentModuleTitle() }}</h1>
+      </div>
+      <div class="header-right">
+        <span class="date">{{ currentDate }}</span>
+        <div class="user-info">
+          <span class="name">{{ authService.userDisplayName() }}</span>
+          <span class="role">{{ authService.userRole() }}</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

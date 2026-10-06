@@ -1,0 +1,101 @@
+<div class="panel">
+  <div class="toolbar">
+    <div class="filters">
+      <input type="text" class="input-text" placeholder="Buscar por nombre o email..." (input)="updateSearch($event)">
+    </div>
+    <button class="btn-primary" (click)="openModal()">+ Nuevo Usuario</button>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th>Último Acceso</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (user of filteredUsers(); track user.id) {
+        <tr>
+          <td><strong>{{ user.name }}</strong></td>
+          <td>{{ user.email }}</td>
+          <td class="capitalize">{{ user.role }}</td>
+          <td>
+            @if (user.isActive) {
+              <span class="badge badge-optimo">Activo</span>
+            } @else {
+              <span class="badge badge-agotado">Inactivo</span>
+            }
+          </td>
+          <td>{{ user.lastLogin ? (user.lastLogin | date:'short') : 'Nunca' }}</td>
+          <td class="actions">
+            <button class="btn-action edit" (click)="openModal(user)" title="Editar">✏️</button>
+            <button class="btn-action" [class.success]="!user.isActive" [class.danger]="user.isActive" (click)="toggleStatus(user.id)" title="Activar/Desactivar">
+              {{ user.isActive ? '❌' : '✅' }}
+            </button>
+            <button class="btn-action danger" (click)="deleteUser(user.id)" title="Eliminar">🗑️</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="empty-state">No se encontraron usuarios.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (isModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <aside class="modal-panel slide-in">
+    <div class="modal-header">
+      <h2>{{ selectedUser() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
+      <button class="btn-close" (click)="closeModal()">✖</button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="admin-form">
+        <div class="form-group">
+          <label for="name">Nombre Completo</label>
+          <input type="text" id="name" formControlName="name" class="input-text">
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" formControlName="email" class="input-text">
+        </div>
+
+        <div class="form-group">
+          <label>Rol</label>
+          <div class="roles-grid">
+            <div class="role-card" [class.selected]="userForm.value.role === 'admin'" (click)="selectRole('admin')">
+              <span class="icon">👑</span>
+              <strong>Admin</strong>
+              <span>Acceso total</span>
+            </div>
+            <div class="role-card" [class.selected]="userForm.value.role === 'vendedor'" (click)="selectRole('vendedor')">
+              <span class="icon">🖥️</span>
+              <strong>Vendedor</strong>
+              <span>Solo Caja POS</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group-checkbox">
+          <label>
+            <input type="checkbox" formControlName="isActive">
+            Usuario Activo
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-outline" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="userForm.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </aside>
+}
